@@ -24,17 +24,14 @@ class Graph:
   """
 
   def dijkstra(self, start_vertex):
-    nodes_number = len(self.nodes.keys())
     D = {node_id:float('inf') for node_id in self.nodes.keys()}
     D[start_vertex.id] = 0
 
     queue = []
-    queue.append((start_vertex, 0))
+    queue.append(start_vertex)
 
     while len(queue) > 0:
-      (current_vertex, weight) = queue.pop(0)
-      self.visited.append(current_vertex.id)
-
+      current_vertex = queue.pop(0)
       print("current vertex ", current_vertex.id)
       print("current vertex edges", current_vertex.edges)
 
@@ -42,12 +39,34 @@ class Graph:
         print("visited: ", self.visited)
         print(f"neighbour id: {neighbor_id}, distance: {distance}")
 
-        if neighbor_id not in self.visited:
-          old_cost = D[neighbor_id] if neighbor_id in D else float('inf')
-          new_cost = D[current_vertex.id] + distance
-          if new_cost < old_cost:
-            queue.append((self.nodes[neighbor_id], new_cost))
-            D[neighbor_id] = new_cost
+        old_cost = D[neighbor_id] if neighbor_id in D else float('inf')
+        new_cost = D[current_vertex.id] + distance
+        if new_cost < old_cost:
+          queue.append(self.nodes[neighbor_id])
+          D[neighbor_id] = new_cost
+    return D
+
+  def dijkstra_all_nodes(self):
+    D = {node_id:[float('inf') for node_id in self.nodes.keys()] for node_id in self.nodes.keys()}
+    queue = []
+
+    """
+    here there is a bitmap es. [1010] which represents exactly the nodes which have been visited and can be used as key in a dict
+    """
+    for node_id in self.nodes.keys():
+      D[node_id][node_id] = 0
+      queue.append(node, 0) # 0 is the number of visited nodes
+
+    while len(queue) > 0:
+      current_vertex = queue.pop(0)
+
+      for neighbor_id, distance in current_vertex.edges.items():
+
+        old_cost = D[neighbor_id] if neighbor_id in D else float('inf')
+        new_cost = D[current_vertex.id] + distance
+        if new_cost < old_cost:
+          queue.append(self.nodes[neighbor_id])
+          D[neighbor_id] = new_cost
     return D
 
 if __name__ == "__main__":
