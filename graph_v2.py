@@ -47,26 +47,34 @@ class Graph:
     return D
 
   def dijkstra_all_nodes(self):
-    D = {node_id:[float('inf') for node_id in self.nodes.keys()] for node_id in self.nodes.keys()}
+    node_ids = self.node.keys()
+    V = len(node_ids)
+    D = {node_id:{2^i:float('inf') for i in range(V)} for node_id in node_ids}
     queue = []
 
     """
     here there is a bitmap es. [1010] which represents exactly the nodes which have been visited and can be used as key in a dict
     """
-    for node_id in self.nodes.keys():
-      D[node_id][node_id] = 0
-      queue.append(node, 0) # 0 is the number of visited nodes
+    for i in range(V):
+      D[node_ids[i]][2^i] = 0
+      queue.append(node_ids[i], 2^i)
 
     while len(queue) > 0:
-      current_vertex = queue.pop(0)
+      (current_vertex, mask) = queue.pop(0)
 
       for neighbor_id, distance in current_vertex.edges.items():
+        new_mask = mask | 2^node_ids.index(neighbor_id)
+        if D[neighbor_id][new_mask] > D[current_vertex.id][mask] + distance:
+          queue.append(self.nodes[neighbor_id], new_mask)
+          D[neighbor_id][new_mask] = D[current_vertex.id][mask] + distance
+    
+    answer = float('inf')
+    for i in range(V):
+      answer = min(answer, D[node_ids[i]][2^V-1])
+    
+    return answer
 
-        old_cost = D[neighbor_id] if neighbor_id in D else float('inf')
-        new_cost = D[current_vertex.id] + distance
-        if new_cost < old_cost:
-          queue.append(self.nodes[neighbor_id])
-          D[neighbor_id] = new_cost
+
     return D
 
 if __name__ == "__main__":
