@@ -1,3 +1,4 @@
+from queue import PriorityQueue
 class Node:
   def __init__(self, node_id, value=0):
     self.id = node_id
@@ -32,13 +33,8 @@ class Graph:
 
     while len(queue) > 0:
       current_vertex = queue.pop(0)
-      print("current vertex ", current_vertex.id)
-      print("current vertex edges", current_vertex.edges)
 
       for neighbor_id, distance in current_vertex.edges.items():
-        print("visited: ", self.visited)
-        print(f"neighbour id: {neighbor_id}, distance: {distance}")
-
         old_cost = D[neighbor_id] if neighbor_id in D else float('inf')
         new_cost = D[current_vertex.id] + distance
         if new_cost < old_cost:
@@ -47,35 +43,42 @@ class Graph:
     return D
 
   def dijkstra_all_nodes(self):
-    node_ids = self.node.keys()
+    node_ids = list(self.nodes.keys())
     V = len(node_ids)
-    D = {node_id:{2^i:float('inf') for i in range(V)} for node_id in node_ids}
+    D = {node_id:{} for node_id in node_ids}
     queue = []
 
     """
     here there is a bitmap es. [1010] which represents exactly the nodes which have been visited and can be used as key in a dict
     """
     for i in range(V):
-      D[node_ids[i]][2^i] = 0
-      queue.append(node_ids[i], 2^i)
+      D[node_ids[i]][2**i] = 0
+      queue.append((self.nodes[node_ids[i]], 2**i))
+    print(D)
 
     while len(queue) > 0:
       (current_vertex, mask) = queue.pop(0)
-
       for neighbor_id, distance in current_vertex.edges.items():
-        new_mask = mask | 2^node_ids.index(neighbor_id)
-        if D[neighbor_id][new_mask] > D[current_vertex.id][mask] + distance:
-          queue.append(self.nodes[neighbor_id], new_mask)
+        new_mask = mask | 2**node_ids.index(neighbor_id)
+
+        old_cost = D[neighbor_id][mask] if mask in D[neighbor_id] else float('inf')
+        new_cost = D[current_vertex.id][mask] + distance
+        
+        print(f"current: {current_vertex.id}, neighbour: {neighbor_id}, mask: {bin(mask)}, old_cost: {old_cost}, new_cost: {new_cost}")
+        
+        if old_cost > new_cost:
+          queue.append((self.nodes[neighbor_id], new_mask))
           D[neighbor_id][new_mask] = D[current_vertex.id][mask] + distance
     
-    answer = float('inf')
+    best_answer = float('inf')
+    solution_mask = 2**V-1
     for i in range(V):
-      answer = min(answer, D[node_ids[i]][2^V-1])
+      answer = D[node_ids[i]][solution_mask] if solution_mask in D[node_ids[i]] else float('inf')
+      print("answer n", answer)
+      best_answer = min(best_answer, answer)
     
-    return answer
+    return best_answer
 
-
-    return D
 
 if __name__ == "__main__":
   graph = Graph("test")
@@ -99,5 +102,26 @@ if __name__ == "__main__":
   graph.add_node(node_E)
 
   solution = graph.dijkstra(node_A)
-  print(solution)
+  print("Dijkstra: ", solution)
+  
+  graph_2 = Graph("test_all_nodes")
+  node_A = Node("A")  
+  node_B = Node("B")  
+  node_C = Node("C")  
+  node_D = Node("D")
+
+  node_A.add_edge("B", 1)
+  node_A.add_edge("C", 1)
+  node_A.add_edge("D", 1)
+  node_B.add_edge("A", 1)
+  node_C.add_edge("A", 1)
+  node_D.add_edge("A", 1)
+
+  graph_2.add_node(node_A)
+  graph_2.add_node(node_B)
+  graph_2.add_node(node_C)
+  graph_2.add_node(node_D)
+  
+  solution = graph_2.dijkstra_all_nodes()
+  print("Dijkstra visiting all nodes: ", solution)
   
