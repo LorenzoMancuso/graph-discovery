@@ -27,7 +27,7 @@ class Graph:
   def dijkstra(self, start_vertex):
     D = {node_id:float('inf') for node_id in self.nodes.keys()}
     D[start_vertex.id] = 0
-
+    prev = {node_id: None for node_id in self.nodes.keys()}
     queue = []
     queue.append(start_vertex)
 
@@ -40,7 +40,9 @@ class Graph:
         if new_cost < old_cost:
           queue.append(self.nodes[neighbor_id])
           D[neighbor_id] = new_cost
-    return D
+          prev[neighbor_id] = current_vertex.id
+
+    return D, prev
 
   def dijkstra_all_nodes(self):
     node_ids = list(self.nodes.keys())
@@ -79,7 +81,12 @@ class Graph:
     
     return best_answer
 
-
+  def discover_dijkstra_path(self, node_id, prev, solution = []):
+    if prev[node_id] is None:
+      return solution + [node_id]
+    
+    return self.discover_dijkstra_path(prev[node_id], prev, solution) + [node_id]
+  
 if __name__ == "__main__":
   graph = Graph("test")
   node_A = Node("A")  
@@ -101,9 +108,11 @@ if __name__ == "__main__":
   graph.add_node(node_D)
   graph.add_node(node_E)
 
-  solution = graph.dijkstra(node_A)
+  solution, prev = graph.dijkstra(node_A)
   print("Dijkstra: ", solution)
-  
+  for node_id in graph.nodes.keys():
+    print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
+
   graph_2 = Graph("test_all_nodes")
   node_A = Node("A")  
   node_B = Node("B")  
