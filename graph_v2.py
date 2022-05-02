@@ -84,6 +84,25 @@ class Graph:
       return solution + [node_id]
     
     return self.discover_dijkstra_path(prev[node_id], prev, solution) + [node_id]
+
+  def floyd_warshall(self):
+    return float('inf')
+
+  def _calculate_permutations(self, node, permutations=[]):
+      for neighbor_id in node.edges:
+        pass
+
+    return
+
+  def brute_force_search(self):
+    node_ids = list(self.nodes.keys())
+    distance = {node_id:{} for node_id in node_ids}
+
+    for node_id_1 in node_ids:
+      for node_id_2 in node_ids:
+        distance[node_id_1][node_id_2] = floyd_warshall() if node_id_1 != node_id_2 else 0
+    
+    permutations = _calculate_permutations(self.nodes.values()[0])
   
 if __name__ == "__main__":
   graph = Graph("test")
