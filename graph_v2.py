@@ -56,7 +56,6 @@ class Graph:
     for i in range(V):
       D[node_ids[i]][2**i] = 0
       queue.append((self.nodes[node_ids[i]], 2**i))
-    print(D)
 
     while len(queue) > 0:
       (current_vertex, mask) = queue.pop(0)
@@ -66,7 +65,7 @@ class Graph:
         old_cost = D[neighbor_id][mask] if mask in D[neighbor_id] else float('inf')
         new_cost = D[current_vertex.id][mask] + distance
         
-        print(f"current: {current_vertex.id}, neighbour: {neighbor_id}, mask: {bin(mask)}, old_cost: {old_cost}, new_cost: {new_cost}")
+        # print(f"current: {current_vertex.id}, neighbour: {neighbor_id}, mask: {bin(mask)}, old_cost: {old_cost}, new_cost: {new_cost}")
         
         if old_cost > new_cost:
           queue.append((self.nodes[neighbor_id], new_mask))
@@ -76,7 +75,6 @@ class Graph:
     solution_mask = 2**V-1
     for i in range(V):
       answer = D[node_ids[i]][solution_mask] if solution_mask in D[node_ids[i]] else float('inf')
-      print("answer n", answer)
       best_answer = min(best_answer, answer)
     
     return best_answer
@@ -132,5 +130,5 @@ if __name__ == "__main__":
   graph_2.add_node(node_D)
   
   solution = graph_2.dijkstra_all_nodes()
-  print("Dijkstra visiting all nodes: ", solution)
+  print("Dijkstra shortest path visiting all nodes: ", solution)
   
