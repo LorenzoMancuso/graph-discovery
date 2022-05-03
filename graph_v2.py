@@ -86,24 +86,52 @@ class Graph:
     return self.discover_dijkstra_path(prev[node_id], prev, solution) + [node_id]
 
   def floyd_warshall(self):
-    return float('inf')
+    node_ids = list(self.nodes.keys())
+    distance = {node_id:{node_id:float('inf') for node_id in node_ids} for node_id in node_ids}
+    for node_id in node_ids:
+      distance[node_id][node_id] = 0
 
-  def _calculate_permutations(self, node, permutations=[]):
-      for neighbor_id in node.edges:
-        pass
+    for node in self.nodes.values():
+      for neighbor_id, weight in node.edges.items():
+        distance[node.id][neighbor_id] = weight
 
-    return
+    for k in node_ids:
+      for i in node_ids:
+        for j in node_ids:
+          if distance[i][j] > distance[i][k] + distance[k][j]:
+            distance[i][j] = distance[i][k] + distance[k][j]
+
+    return distance
+
+  def _calculate_permutations(self, elements):
+    if len(elements) <=1:
+        yield elements
+    else:
+        for perm in self._calculate_permutations(elements[1:]):
+            for i in range(len(elements)):
+                # nb elements[0:1] works in both string and list contexts
+                yield perm[:i] + elements[0:1] + perm[i:]
 
   def brute_force_search(self):
     node_ids = list(self.nodes.keys())
-    distance = {node_id:{} for node_id in node_ids}
+    distance = self.floyd_warshall()
+    permutations = list(self._calculate_permutations(list(self.nodes.keys())))
+    answer = float('inf')
+    best_path = None
 
-    for node_id_1 in node_ids:
-      for node_id_2 in node_ids:
-        distance[node_id_1][node_id_2] = floyd_warshall() if node_id_1 != node_id_2 else 0
-    
-    permutations = _calculate_permutations(self.nodes.values()[0])
-  
+    for permutation in permutations:
+      cost = 0
+      previous_node_id = permutation[0]
+      for node_id in permutation:
+        cost += distance[previous_node_id][node_id]
+        previous_node_id = node_id
+      if cost < answer:
+        answer = cost
+        best_path = permutation
+
+    return best_path
+
+
 if __name__ == "__main__":
   graph = Graph("test")
   node_A = Node("A")  
@@ -130,6 +158,7 @@ if __name__ == "__main__":
   for node_id in graph.nodes.keys():
     print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
 
+  #---------------------------------------
   graph_2 = Graph("test_all_nodes")
   node_A = Node("A")  
   node_B = Node("B")  
@@ -150,4 +179,7 @@ if __name__ == "__main__":
   
   solution = graph_2.dijkstra_all_nodes()
   print("Dijkstra shortest path visiting all nodes: ", solution)
-  
+
+  #---------------------------------------
+  solution = graph_2.brute_force_search()
+  print("Brute force search: ", solution)
