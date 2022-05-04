@@ -158,6 +158,8 @@ if __name__ == "__main__":
   for node_id in graph.nodes.keys():
     print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
 
+  solution = graph.dijkstra_all_nodes()
+  print("Dijkstra shortest path visiting all nodes: ", solution)
   #---------------------------------------
   graph_2 = Graph("test_all_nodes")
   node_A = Node("A")  
