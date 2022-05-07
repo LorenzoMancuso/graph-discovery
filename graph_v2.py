@@ -86,8 +86,70 @@ class Graph:
       return solution + [node_id]
     
     return self.discover_dijkstra_path(prev[node_id], prev, solution) + [node_id]
+
+  """
+  def _stuck(self, x):
+    if x == t:
+      return False
+    for each neighbor y of x:
+      if y not in seen
+        insert y in seen
+        if !stuck(y)
+          return False
+    return True
+  """
+  def _stuck(self, node, path, k=0):
+    stuck = True
+    if k == int(len(self.nodes) / 2):
+      return True
+
+    if node.id not in path:
+      return False
+    
+    for neighbour_id in node.edges.keys():
+      stuck = stuck and self._stuck(self.nodes[neighbour_id], path + [node.id], k+1)
+
+    return stuck
   
+  def find_all_paths_visiting_all_nodes(self, node):
+    solution_paths = []
+    nodes_ids = node.edges.keys()
+    node_ids = list(self.nodes.keys())
+    V = len(node_ids)
+    solution_mask = 2**V-1
+    mask = 2**node_ids.index(node.id)
+
+    for neighbour_id in nodes_ids:
+      self._find_all_paths_visiting_all_nodes(self.nodes[neighbour_id], [node.id], solution_paths, mask, solution_mask, node_ids)
+    
+    return solution_paths
+
+  def _find_all_paths_visiting_all_nodes(self, node, path, solution_paths, mask, solution_mask, node_ids):
+    if self._stuck(node, path):
+      print("stuck ", path, node.id)
+    elif mask == solution_mask:
+      solution_paths.append(path+[node.id])
+    else:    
+      for neighbour_id in node.edges.keys():
+        new_mask = mask | 2**node_ids.index(neighbour_id)
+        self._find_all_paths_visiting_all_nodes(self.nodes[neighbour_id], path+[node.id], solution_paths, new_mask, solution_mask, node_ids)
+        
+    """
+    if x == t
+      print path
+      return
+    seen = set(path)
+    if stuck(x)
+      return
+    for each neighbor y of x
+      if y not in path:
+        push y on the path
+        search(y)
+        pop y from the path
+    """
+
 if __name__ == "__main__":
+  """
   graph = Graph("test")
   node_A = Node("A")  
   node_B = Node("B")  
@@ -112,6 +174,7 @@ if __name__ == "__main__":
   print("Dijkstra: ", solution)
   for node_id in graph.nodes.keys():
     print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
+  """
 
   graph_2 = Graph("test_all_nodes")
   node_A = Node("A")  
@@ -131,6 +194,11 @@ if __name__ == "__main__":
   graph_2.add_node(node_C)
   graph_2.add_node(node_D)
   
-  solution = graph_2.dijkstra_all_nodes()
-  print("Dijkstra visiting all nodes: ", solution)
+  # solution = graph_2.dijkstra_all_nodes()
+  # print("Dijkstra visiting all nodes: ", solution)
   
+  #print(graph_2._stuck(node_A, ["B","A","C"]))
+  all_paths = []
+  for node in graph_2.nodes.values():
+    all_paths += graph_2.find_all_paths_visiting_all_nodes(node)
+  print(all_paths)
