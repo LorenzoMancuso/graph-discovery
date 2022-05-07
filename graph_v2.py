@@ -56,7 +56,6 @@ class Graph:
     for i in range(V):
       D[node_ids[i]][2**i] = 0
       queue.append((self.nodes[node_ids[i]], 2**i))
-    print(D)
 
     while len(queue) > 0:
       (current_vertex, mask) = queue.pop(0)
@@ -66,7 +65,7 @@ class Graph:
         old_cost = D[neighbor_id][mask] if mask in D[neighbor_id] else float('inf')
         new_cost = D[current_vertex.id][mask] + distance
         
-        print(f"current: {current_vertex.id}, neighbour: {neighbor_id}, mask: {bin(mask)}, old_cost: {old_cost}, new_cost: {new_cost}")
+        # print(f"current: {current_vertex.id}, neighbour: {neighbor_id}, mask: {bin(mask)}, old_cost: {old_cost}, new_cost: {new_cost}")
         
         if old_cost > new_cost:
           queue.append((self.nodes[neighbor_id], new_mask))
@@ -76,7 +75,6 @@ class Graph:
     solution_mask = 2**V-1
     for i in range(V):
       answer = D[node_ids[i]][solution_mask] if solution_mask in D[node_ids[i]] else float('inf')
-      print("answer n", answer)
       best_answer = min(best_answer, answer)
     
     return best_answer
@@ -147,6 +145,52 @@ class Graph:
         search(y)
         pop y from the path
     """
+  def floyd_warshall(self):
+    node_ids = list(self.nodes.keys())
+    distance = {node_id:{node_id:float('inf') for node_id in node_ids} for node_id in node_ids}
+    for node_id in node_ids:
+      distance[node_id][node_id] = 0
+
+    for node in self.nodes.values():
+      for neighbor_id, weight in node.edges.items():
+        distance[node.id][neighbor_id] = weight
+
+    for k in node_ids:
+      for i in node_ids:
+        for j in node_ids:
+          if distance[i][j] > distance[i][k] + distance[k][j]:
+            distance[i][j] = distance[i][k] + distance[k][j]
+
+    return distance
+
+  def _calculate_permutations(self, elements):
+    if len(elements) <=1:
+        yield elements
+    else:
+        for perm in self._calculate_permutations(elements[1:]):
+            for i in range(len(elements)):
+                # nb elements[0:1] works in both string and list contexts
+                yield perm[:i] + elements[0:1] + perm[i:]
+
+  def brute_force_search(self):
+    node_ids = list(self.nodes.keys())
+    distance = self.floyd_warshall()
+    permutations = list(self._calculate_permutations(list(self.nodes.keys())))
+    answer = float('inf')
+    best_path = None
+
+    for permutation in permutations:
+      cost = 0
+      previous_node_id = permutation[0]
+      for node_id in permutation:
+        cost += distance[previous_node_id][node_id]
+        previous_node_id = node_id
+      if cost < answer:
+        answer = cost
+        best_path = permutation
+
+    return best_path
+
 
 if __name__ == "__main__":
   """
@@ -176,6 +220,9 @@ if __name__ == "__main__":
     print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
   """
 
+  solution = graph.dijkstra_all_nodes()
+  print("Dijkstra shortest path visiting all nodes: ", solution)
+  #---------------------------------------
   graph_2 = Graph("test_all_nodes")
   node_A = Node("A")  
   node_B = Node("B")  
@@ -202,3 +249,9 @@ if __name__ == "__main__":
   for node in graph_2.nodes.values():
     all_paths += graph_2.find_all_paths_visiting_all_nodes(node)
   print(all_paths)
+  solution = graph_2.dijkstra_all_nodes()
+  print("Dijkstra shortest path visiting all nodes: ", solution)
+
+  #---------------------------------------
+  solution = graph_2.brute_force_search()
+  print("Brute force search: ", solution)
