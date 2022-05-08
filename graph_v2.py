@@ -89,12 +89,11 @@ class Graph:
   
   # --------------------------------------------
 
-  def _stuck(self, node, path, k=0):
-    #print("stuck ", path, node.id, k)
+  def _stuck(self, node, path, V, k=0):
     stuck = True
-    if path.count(node.id) >= 1:
+    if path.count(node.id) >= V:
       return True
-    if k == 2:
+    if k == V/2:
       return True
     if node.id not in path:
       return False
@@ -108,7 +107,7 @@ class Graph:
     all_paths = []
     for node in self.nodes.values():
       all_paths += self.find_all_paths_visiting_all_nodes_from_node(node)
-    return all_paths
+    return sorted(all_paths, key=lambda x: len(x))
     
   def find_all_paths_visiting_all_nodes_from_node(self, node):
     solution_paths = []
@@ -119,19 +118,21 @@ class Graph:
     mask = 2**node_ids.index(node.id)
 
     for neighbour_id in nodes_ids:
-      self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], [node.id], solution_paths, mask, solution_mask, node_ids)
+      new_mask = mask | 2**node_ids.index(neighbour_id)
+      self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], [node.id], solution_paths, new_mask, solution_mask, node_ids, V)
     
     return solution_paths
 
-  def find_all_paths_visiting_all_nodes_from_node_helper(self, node, path, solution_paths, mask, solution_mask, node_ids):
-    if self._stuck(node, path):
+  def find_all_paths_visiting_all_nodes_from_node_helper(self, node, path, solution_paths, mask, solution_mask, node_ids, V):
+    if self._stuck(node, path, V):
       pass
     elif mask == solution_mask:
       solution_paths.append(path+[node.id])
-    else:    
-      for neighbour_id in node.edges.keys():
+    else:
+      neighbours = sorted(node.edges.keys(), key=lambda x: x in path)
+      for neighbour_id in neighbours:
         new_mask = mask | 2**node_ids.index(neighbour_id)
-        self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], path+[node.id], solution_paths, new_mask, solution_mask, node_ids)
+        self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], path+[node.id], solution_paths, new_mask, solution_mask, node_ids, V)
 
   # --------------------------------------------
 
@@ -212,13 +213,9 @@ if __name__ == "__main__":
   solution = graph.dijkstra_all_nodes()
   print("Dijkstra shortest path visiting all nodes: ", solution)
   """
-  solution = graph.find_all_paths_visiting_all_nodes_from_node(node_A)
 
-  solution = sorted(solution, key=lambda x: len(x))[:5]
-
-  print(solution)
-  #solution, cost = graph.brute_force_search()
-  #print("Brute force search: ", solution, " Cost: ", cost)
+  solution, cost = graph.brute_force_search()
+  print("Brute force search: ", solution, " Cost: ", cost)
 
   #---------------------------------------
   """
