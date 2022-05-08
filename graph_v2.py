@@ -8,6 +8,10 @@ class Node:
   def add_edge(self, other_node_id, distance=0):
     self.edges[other_node_id] = distance
 
+  def add_undirected_edge(self, other_node, distance=0):
+    self.edges[other_node.id] = distance
+    other_node.edges[self.id] = distance
+
 class Graph:
 
   def __init__(self, graph_id):
@@ -65,8 +69,6 @@ class Graph:
         old_cost = D[neighbor_id][mask] if mask in D[neighbor_id] else float('inf')
         new_cost = D[current_vertex.id][mask] + distance
         
-        # print(f"current: {current_vertex.id}, neighbour: {neighbor_id}, mask: {bin(mask)}, old_cost: {old_cost}, new_cost: {new_cost}")
-        
         if old_cost > new_cost:
           queue.append((self.nodes[neighbor_id], new_mask))
           D[neighbor_id][new_mask] = D[current_vertex.id][mask] + distance
@@ -84,23 +86,16 @@ class Graph:
       return solution + [node_id]
     
     return self.discover_dijkstra_path(prev[node_id], prev, solution) + [node_id]
+  
+  # --------------------------------------------
 
-  """
-  def _stuck(self, x):
-    if x == t:
-      return False
-    for each neighbor y of x:
-      if y not in seen
-        insert y in seen
-        if !stuck(y)
-          return False
-    return True
-  """
   def _stuck(self, node, path, k=0):
+    #print("stuck ", path, node.id, k)
     stuck = True
-    if k == int(len(self.nodes) / 2):
+    if path.count(node.id) >= 1:
       return True
-
+    if k == 2:
+      return True
     if node.id not in path:
       return False
     
@@ -108,8 +103,14 @@ class Graph:
       stuck = stuck and self._stuck(self.nodes[neighbour_id], path + [node.id], k+1)
 
     return stuck
-  
-  def find_all_paths_visiting_all_nodes(self, node):
+
+  def find_all_paths_visiting_all_nodes(self):
+    all_paths = []
+    for node in self.nodes.values():
+      all_paths += self.find_all_paths_visiting_all_nodes_from_node(node)
+    return all_paths
+    
+  def find_all_paths_visiting_all_nodes_from_node(self, node):
     solution_paths = []
     nodes_ids = node.edges.keys()
     node_ids = list(self.nodes.keys())
@@ -118,33 +119,22 @@ class Graph:
     mask = 2**node_ids.index(node.id)
 
     for neighbour_id in nodes_ids:
-      self._find_all_paths_visiting_all_nodes(self.nodes[neighbour_id], [node.id], solution_paths, mask, solution_mask, node_ids)
+      self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], [node.id], solution_paths, mask, solution_mask, node_ids)
     
     return solution_paths
 
-  def _find_all_paths_visiting_all_nodes(self, node, path, solution_paths, mask, solution_mask, node_ids):
+  def find_all_paths_visiting_all_nodes_from_node_helper(self, node, path, solution_paths, mask, solution_mask, node_ids):
     if self._stuck(node, path):
-      print("stuck ", path, node.id)
+      pass
     elif mask == solution_mask:
       solution_paths.append(path+[node.id])
     else:    
       for neighbour_id in node.edges.keys():
         new_mask = mask | 2**node_ids.index(neighbour_id)
-        self._find_all_paths_visiting_all_nodes(self.nodes[neighbour_id], path+[node.id], solution_paths, new_mask, solution_mask, node_ids)
-        
-    """
-    if x == t
-      print path
-      return
-    seen = set(path)
-    if stuck(x)
-      return
-    for each neighbor y of x
-      if y not in path:
-        push y on the path
-        search(y)
-        pop y from the path
-    """
+        self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], path+[node.id], solution_paths, new_mask, solution_mask, node_ids)
+
+  # --------------------------------------------
+
   def floyd_warshall(self):
     node_ids = list(self.nodes.keys())
     distance = {node_id:{node_id:float('inf') for node_id in node_ids} for node_id in node_ids}
@@ -173,9 +163,9 @@ class Graph:
                 yield perm[:i] + elements[0:1] + perm[i:]
 
   def brute_force_search(self):
-    node_ids = list(self.nodes.keys())
     distance = self.floyd_warshall()
-    permutations = list(self._calculate_permutations(list(self.nodes.keys())))
+    # permutations = list(self._calculate_permutations(list(self.nodes.keys())))
+    permutations = self.find_all_paths_visiting_all_nodes()
     answer = float('inf')
     best_path = None
 
@@ -189,11 +179,10 @@ class Graph:
         answer = cost
         best_path = permutation
 
-    return best_path
+    return best_path, answer
 
 
 if __name__ == "__main__":
-  """
   graph = Graph("test")
   node_A = Node("A")  
   node_B = Node("B")  
@@ -201,12 +190,12 @@ if __name__ == "__main__":
   node_D = Node("D")  
   node_E = Node("E")
 
-  node_A.add_edge("B", 15)
-  node_A.add_edge("C", 4)
-  node_B.add_edge("E", 5)
-  node_C.add_edge("D", 2)
-  node_C.add_edge("E", 11)
-  node_D.add_edge("E", 3)
+  node_A.add_undirected_edge(node_B, 15)
+  node_A.add_undirected_edge(node_C, 4)
+  node_B.add_undirected_edge(node_E, 5)
+  node_C.add_undirected_edge(node_D, 2)
+  node_C.add_undirected_edge(node_E, 11)
+  node_D.add_undirected_edge(node_E, 3)
 
   graph.add_node(node_A)
   graph.add_node(node_B)
@@ -214,15 +203,25 @@ if __name__ == "__main__":
   graph.add_node(node_D)
   graph.add_node(node_E)
 
+  """
   solution, prev = graph.dijkstra(node_A)
   print("Dijkstra: ", solution)
   for node_id in graph.nodes.keys():
     print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
-  """
 
   solution = graph.dijkstra_all_nodes()
   print("Dijkstra shortest path visiting all nodes: ", solution)
+  """
+  solution = graph.find_all_paths_visiting_all_nodes_from_node(node_A)
+
+  solution = sorted(solution, key=lambda x: len(x))[:5]
+
+  print(solution)
+  #solution, cost = graph.brute_force_search()
+  #print("Brute force search: ", solution, " Cost: ", cost)
+
   #---------------------------------------
+  """
   graph_2 = Graph("test_all_nodes")
   node_A = Node("A")  
   node_B = Node("B")  
@@ -243,15 +242,10 @@ if __name__ == "__main__":
   
   # solution = graph_2.dijkstra_all_nodes()
   # print("Dijkstra visiting all nodes: ", solution)
-  
-  #print(graph_2._stuck(node_A, ["B","A","C"]))
-  all_paths = []
-  for node in graph_2.nodes.values():
-    all_paths += graph_2.find_all_paths_visiting_all_nodes(node)
-  print(all_paths)
+
   solution = graph_2.dijkstra_all_nodes()
   print("Dijkstra shortest path visiting all nodes: ", solution)
 
-  #---------------------------------------
-  solution = graph_2.brute_force_search()
-  print("Brute force search: ", solution)
+  solution, cost = graph_2.brute_force_search()
+  print("Brute force search: ", solution, " Cost: ", cost)
+  """
