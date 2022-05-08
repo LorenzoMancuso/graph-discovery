@@ -66,7 +66,7 @@ class Graph:
       for neighbor_id, distance in current_vertex.edges.items():
         new_mask = mask | 2**node_ids.index(neighbor_id)
 
-        old_cost = D[neighbor_id][mask] if mask in D[neighbor_id] else float('inf')
+        old_cost = D[neighbor_id][new_mask] if new_mask in D[neighbor_id] else float('inf')
         new_cost = D[current_vertex.id][mask] + distance
         
         if old_cost > new_cost:
@@ -208,12 +208,10 @@ if __name__ == "__main__":
   solution, prev = graph.dijkstra(node_A)
   print("Dijkstra: ", solution)
   for node_id in graph.nodes.keys():
-    print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev))
-
+    print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev)) 
+  """
   solution = graph.dijkstra_all_nodes()
   print("Dijkstra shortest path visiting all nodes: ", solution)
-  """
-
   solution, cost = graph.brute_force_search()
   print("Brute force search: ", solution, " Cost: ", cost)
 
