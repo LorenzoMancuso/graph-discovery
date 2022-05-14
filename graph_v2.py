@@ -1,9 +1,11 @@
+from cgi import parse_multipart
 from queue import PriorityQueue
 class Node:
-  def __init__(self, node_id, value=0):
+  def __init__(self, node_id, value=0, priority=3):
     self.id = node_id
     self.value = value
     self.edges = {} 
+    self.priority = priority 
 
   def add_edge(self, other_node_id, distance=0):
     self.edges[other_node_id] = distance
@@ -129,7 +131,7 @@ class Graph:
     elif mask == solution_mask:
       solution_paths.append(path+[node.id])
     else:
-      neighbours = sorted(node.edges.keys(), key=lambda x: x in path)
+      neighbours = sorted(node.edges.keys(), key=lambda x: (x in path, self.nodes[x].priority))
       for neighbour_id in neighbours:
         new_mask = mask | 2**node_ids.index(neighbour_id)
         self.find_all_paths_visiting_all_nodes_from_node_helper(self.nodes[neighbour_id], path+[node.id], solution_paths, new_mask, solution_mask, node_ids, V)
@@ -163,12 +165,10 @@ class Graph:
                 # nb elements[0:1] works in both string and list contexts
                 yield perm[:i] + elements[0:1] + perm[i:]
 
-  def brute_force_search(self):
+  def brute_force_search(self, k=1):
     distance = self.floyd_warshall()
-    # permutations = list(self._calculate_permutations(list(self.nodes.keys())))
     permutations = self.find_all_paths_visiting_all_nodes()
-    answer = float('inf')
-    best_path = None
+    solutions = []
 
     for permutation in permutations:
       cost = 0
@@ -176,20 +176,44 @@ class Graph:
       for node_id in permutation:
         cost += distance[previous_node_id][node_id]
         previous_node_id = node_id
-      if cost < answer:
-        answer = cost
-        best_path = permutation
+      solutions.append((cost, permutation))
 
-    return best_path, answer
+    solutions = sorted(solutions, key= lambda x: (x[0], len(x[1])))
+    return solutions[:k], distance
+
+  def split_path_in_stages(self, path, distances):
+    stage_limit = 8
+    stages = []
+    stage = []
+    stage_cost = 0
+    previous_node_id = path[0]
+    visited = {node_id:False for node_id in path}
+    for node_id in path:
+      visit_cost = self.nodes[node_id].value if not visited[node_id] else 0
+      if stage_cost + distances[previous_node_id][node_id] + visit_cost <= stage_limit:
+        stage_cost += distances[previous_node_id][node_id] + visit_cost
+        stage.append(node_id)
+      else:
+        stages.append((stage, stage_cost))
+        stage = [node_id]
+        stage_cost = visit_cost
+      
+      visited[node_id] = True
+      previous_node_id = node_id
+    
+    stages.append((stage, stage_cost))
+    
+    return stages
+
 
 
 if __name__ == "__main__":
   graph = Graph("test")
-  node_A = Node("A")  
-  node_B = Node("B")  
-  node_C = Node("C")  
-  node_D = Node("D")  
-  node_E = Node("E")
+  node_A = Node("A", 2, 1)  
+  node_B = Node("B", 2, 2)  
+  node_C = Node("C", 2)  
+  node_D = Node("D", 2)  
+  node_E = Node("E", 2, 1)
 
   node_A.add_undirected_edge(node_B, 15)
   node_A.add_undirected_edge(node_C, 4)
@@ -211,9 +235,14 @@ if __name__ == "__main__":
     print(f"Path for node '{node_id}'", graph.discover_dijkstra_path(node_id, prev)) 
   """
   solution = graph.dijkstra_all_nodes()
-  print("Dijkstra shortest path visiting all nodes: ", solution)
-  solution, cost = graph.brute_force_search()
-  print("Brute force search: ", solution, " Cost: ", cost)
+  print("Dijkstra shortest path visiting all nodes: ", solution, '\n')
+  solutions, distances = graph.brute_force_search(20)
+  for solution in solutions:
+    print("Brute force search: ", solution[1], " Cost: ", solution[0])
+
+    stages = graph.split_path_in_stages(solution[1], distances)
+    print("Brute force search paths: ", len(stages), stages, '\n')
+
 
   #---------------------------------------
   """
